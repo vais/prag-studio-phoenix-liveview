@@ -2,7 +2,7 @@ defmodule LiveViewStudioWeb.LightLive do
   use LiveViewStudioWeb, :live_view
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, brightness: 10)}
+    {:ok, assign(socket, brightness: 10, temp: 3000)}
   end
 
   def render(assigns) do
@@ -12,8 +12,8 @@ defmodule LiveViewStudioWeb.LightLive do
     </h1>
     <div id="light">
       <div class="meter">
-        <span style={ "width: #{@brightness}%;" }>
-          <span style="padding: 0 10px">
+        <span style={ "width: #{@brightness}%; background-color: #{temp_color(@temp)};" }>
+          <span class="pl-2">
             <%= @brightness %>%
           </span>
         </span>
@@ -42,13 +42,38 @@ defmodule LiveViewStudioWeb.LightLive do
           max="100"
           step="10"
         />
+        <div class="temps">
+          <div>
+            <%= for temp <- 3000..5000//1000 do %>
+              <label>
+                <input
+                  type="radio"
+                  name="temp"
+                  value={temp}
+                  checked={temp === @temp}
+                  class="mr-2"
+                /><%= temp %>
+              </label>
+            <% end %>
+          </div>
+        </div>
       </form>
     </div>
     """
   end
 
-  def handle_event("update", %{"brightness" => brightness}, socket) do
-    {:noreply, assign(socket, :brightness, String.to_integer(brightness))}
+  defp temp_color(3000), do: "#F1C40D"
+  defp temp_color(4000), do: "#FEFF66"
+  defp temp_color(5000), do: "#99CCFF"
+
+  def handle_event("update", %{"brightness" => brightness, "temp" => temp}, socket) do
+    socket =
+      assign(socket,
+        brightness: String.to_integer(brightness),
+        temp: String.to_integer(temp)
+      )
+
+    {:noreply, socket}
   end
 
   def handle_event("random", _, socket) do
