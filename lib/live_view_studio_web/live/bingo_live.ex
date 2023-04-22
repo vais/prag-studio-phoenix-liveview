@@ -2,13 +2,14 @@ defmodule LiveViewStudioWeb.BingoLive do
   use LiveViewStudioWeb, :live_view
 
   def mount(_params, _session, socket) do
-    socket =
-      assign(socket,
-        number: nil,
-        numbers: all_numbers()
-      )
+    socket = assign(socket, number: nil, numbers: all_numbers())
 
-    {:ok, socket}
+    if connected?(socket) do
+      :timer.send_interval(1000, self(), :pick)
+      {:ok, pick(socket)}
+    else
+      {:ok, socket}
+    end
   end
 
   def render(assigns) do
@@ -45,5 +46,9 @@ defmodule LiveViewStudioWeb.BingoLive do
       Enum.map(numbers, &"#{letter} #{&1}")
     end)
     |> Enum.shuffle()
+  end
+
+  def handle_info(:pick, socket) do
+    {:noreply, pick(socket)}
   end
 end
