@@ -1,21 +1,54 @@
 defmodule LiveViewStudioWeb.FlightsLive do
   use LiveViewStudioWeb, :live_view
 
+  alias LiveViewStudio.Flights
+
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
         airport: "",
-        flights: []
+        flights: [],
+        loading: false
       )
 
     {:ok, socket}
+  end
+
+  def handle_event("search", %{"airport" => airport} = _params, socket) do
+    socket =
+      assign(
+        socket,
+        airport: airport,
+        flights: [],
+        loading: true
+      )
+
+    send(self(), {:find_flights, airport})
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:find_flights, airport}, socket) do
+    flights =
+      airport
+      |> String.upcase()
+      |> Flights.search_by_airport()
+
+    socket =
+      assign(
+        socket,
+        flights: flights,
+        loading: false
+      )
+
+    {:noreply, socket}
   end
 
   def render(assigns) do
     ~H"""
     <h1>Find a Flight</h1>
     <div id="flights">
-      <form>
+      <form phx-submit="search">
         <input
           type="text"
           name="airport"
@@ -23,35 +56,36 @@ defmodule LiveViewStudioWeb.FlightsLive do
           placeholder="Airport Code"
           autofocus
           autocomplete="off"
+          readonly={@loading}
         />
 
-        <button>
+        <button disabled={@loading}>
           <img src="/images/search.svg" />
         </button>
       </form>
 
+      <div :if={@loading} class="loader">Loading...</div>
+
       <div class="flights">
         <ul>
-          <%= for flight <- @flights do %>
-            <li>
-              <div class="first-line">
-                <div class="number">
-                  Flight #<%= flight.number %>
-                </div>
-                <div class="origin-destination">
-                  <%= flight.origin %> to <%= flight.destination %>
-                </div>
+          <li :for={flight <- @flights}>
+            <div class="first-line">
+              <div class="number">
+                Flight #<%= flight.number %>
               </div>
-              <div class="second-line">
-                <div class="departs">
-                  Departs: <%= flight.departure_time %>
-                </div>
-                <div class="arrives">
-                  Arrives: <%= flight.arrival_time %>
-                </div>
+              <div class="origin-destination">
+                <%= flight.origin %> to <%= flight.destination %>
               </div>
-            </li>
-          <% end %>
+            </div>
+            <div class="second-line">
+              <div class="departs">
+                Departs: <%= flight.departure_time %>
+              </div>
+              <div class="arrives">
+                Arrives: <%= flight.arrival_time %>
+              </div>
+            </div>
+          </li>
         </ul>
       </div>
     </div>
