@@ -13,9 +13,33 @@ defmodule LiveViewStudioWeb.BoatsLive do
     {:ok, socket, temporary_assigns: [boats: []]}
   end
 
+  def promo(assigns) do
+    ~H"""
+    <div class="promo">
+      <div class="deal">
+        <%= render_slot(@inner_block) %>
+      </div>
+      <div :if={assigns[:expires]} class="expiration">
+        Deal expires in <%= @expires %> hour<%= if @expires !== 1, do: "s" %>
+      </div>
+      <div :if={assigns[:legal]} class="legal">
+        <%= render_slot(@legal) %>
+      </div>
+    </div>
+    """
+  end
+
   def render(assigns) do
     ~H"""
     <h1>Daily Boat Rentals</h1>
+
+    <.promo expires={1}>
+      Save 25% on rentals!
+      <:legal>
+        <Heroicons.exclamation_circle /> Only 1 per party
+      </:legal>
+    </.promo>
+
     <div id="boats">
       <form phx-change="filter">
         <div class="filters">
@@ -59,6 +83,11 @@ defmodule LiveViewStudioWeb.BoatsLive do
         </div>
       </div>
     </div>
+
+    <.promo expires={3}>
+      Hurry, only <%= Enum.count(@boats) %> <%= @filter.type %> boats left!
+      <:legal>Excluding weekends</:legal>
+    </.promo>
     """
   end
 
