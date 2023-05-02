@@ -3,6 +3,8 @@ defmodule LiveViewStudioWeb.BoatsLive do
 
   alias LiveViewStudio.Boats
 
+  import LiveViewStudioWeb.CustomComponents
+
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
@@ -11,26 +13,6 @@ defmodule LiveViewStudioWeb.BoatsLive do
       )
 
     {:ok, socket, temporary_assigns: [boats: []]}
-  end
-
-  attr :expires, :integer, default: 24
-  slot :inner_block, required: true
-  slot :legal
-
-  def promo(assigns) do
-    ~H"""
-    <div class="promo">
-      <div class="deal">
-        <%= render_slot(@inner_block) %>
-      </div>
-      <div :if={assigns[:expires]} class="expiration">
-        Deal expires in <%= @expires %> hour<%= if @expires !== 1, do: "s" %>
-      </div>
-      <div :if={assigns[:legal]} class="legal">
-        <%= render_slot(@legal) %>
-      </div>
-    </div>
-    """
   end
 
   def render(assigns) do
@@ -45,52 +27,68 @@ defmodule LiveViewStudioWeb.BoatsLive do
     </.promo>
 
     <div id="boats">
-      <form phx-change="filter">
-        <div class="filters">
-          <select name="type">
-            <%= Phoenix.HTML.Form.options_for_select(
-              type_options(),
-              @filter.type
-            ) %>
-          </select>
-          <div class="prices">
-            <%= for price <- ["$", "$$", "$$$"] do %>
-              <input
-                type="checkbox"
-                name="prices[]"
-                value={price}
-                id={price}
-                checked={price in @filter.prices}
-              />
-              <label for={price}><%= price %></label>
-            <% end %>
-            <input type="hidden" name="prices[]" value="" />
-          </div>
-        </div>
-      </form>
+      <.filter_form filter={@filter} />
       <div class="boats">
-        <div :for={boat <- @boats} class="boat">
-          <img src={boat.image} />
-          <div class="content">
-            <div class="model">
-              <%= boat.model %>
-            </div>
-            <div class="details">
-              <span class="price">
-                <%= boat.price %>
-              </span>
-              <span class="type">
-                <%= boat.type %>
-              </span>
-            </div>
-          </div>
-        </div>
+        <.boat_card :for={boat <- @boats} boat={boat} />
       </div>
     </div>
 
     <.promo>
       Hurry, only <%= Enum.count(@boats) %> <%= @filter.type %> boats left!
     </.promo>
+    """
+  end
+
+  attr :boat, Boats.Boat, required: true
+
+  defp boat_card(assigns) do
+    ~H"""
+    <div class="boat">
+      <img src={@boat.image} />
+      <div class="content">
+        <div class="model">
+          <%= @boat.model %>
+        </div>
+        <div class="details">
+          <span class="price">
+            <%= @boat.price %>
+          </span>
+          <span class="type">
+            <%= @boat.type %>
+          </span>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :filter, :map, required: true
+
+  defp filter_form(assigns) do
+    ~H"""
+    <form phx-change="filter">
+      <div class="filters">
+        <select name="type">
+          <%= Phoenix.HTML.Form.options_for_select(
+            type_options(),
+            @filter.type
+          ) %>
+        </select>
+        <div class="prices">
+          <%= for price <- ["$", "$$", "$$$"] do %>
+            <input
+              type="checkbox"
+              name="prices[]"
+              value={price}
+              id={price}
+              checked={price in @filter.prices}
+            />
+            <label for={price}><%= price %></label>
+          <% end %>
+          <input type="hidden" name="prices[]" value="" />
+        </div>
+      </div>
+    </form>
     """
   end
 
