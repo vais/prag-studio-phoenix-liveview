@@ -13,6 +13,10 @@ defmodule LiveViewStudioWeb.BoatsLive do
     {:ok, socket, temporary_assigns: [boats: []]}
   end
 
+  attr :expires, :integer, default: 24
+  slot :inner_block, required: true
+  slot :legal
+
   def promo(assigns) do
     ~H"""
     <div class="promo">
@@ -84,9 +88,8 @@ defmodule LiveViewStudioWeb.BoatsLive do
       </div>
     </div>
 
-    <.promo expires={3}>
+    <.promo>
       Hurry, only <%= Enum.count(@boats) %> <%= @filter.type %> boats left!
-      <:legal>Excluding weekends</:legal>
     </.promo>
     """
   end
