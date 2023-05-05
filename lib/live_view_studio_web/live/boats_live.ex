@@ -19,7 +19,7 @@ defmodule LiveViewStudioWeb.BoatsLive do
     ~H"""
     <h1>Daily Boat Rentals</h1>
 
-    <.promo expires={1}>
+    <.promo expires={1} seconds={3}>
       Save 25% on rentals!
       <:legal>
         <Heroicons.exclamation_circle /> Only 1 per party
