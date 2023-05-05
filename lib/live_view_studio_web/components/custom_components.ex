@@ -1,6 +1,14 @@
 defmodule LiveViewStudioWeb.CustomComponents do
   use Phoenix.Component
 
+  attr :visible, :boolean, default: false
+
+  def loading_indicator(assigns) do
+    ~H"""
+    <div :if={@visible} class="loader">Loading...</div>
+    """
+  end
+
   attr :expires, :integer, default: 24
   attr :seconds, :integer
   slot :inner_block, required: true
