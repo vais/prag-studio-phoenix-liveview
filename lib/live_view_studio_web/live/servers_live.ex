@@ -28,7 +28,7 @@ defmodule LiveViewStudioWeb.ServersLive do
           <.link
             :for={server <- @servers}
             class={if server == @selected_server, do: "selected"}
-            patch={~p"/servers?#{[id: server]}"}
+            patch={~p"/servers/#{server}"}
           >
             <span class={server.status}></span>
             <%= server.name %>
