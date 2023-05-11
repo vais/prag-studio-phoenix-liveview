@@ -9,8 +9,8 @@ defmodule LiveViewStudioWeb.DonationsLive do
 
   def handle_params(params, _url, socket) do
     options = %{
-      sort_by: String.to_existing_atom(params["sort_by"] || "id"),
-      sort_order: String.to_existing_atom(params["sort_order"] || "asc")
+      sort_by: valid_sort_by(params),
+      sort_order: valid_sort_order(params)
     }
 
     socket =
@@ -22,6 +22,18 @@ defmodule LiveViewStudioWeb.DonationsLive do
 
     {:noreply, socket}
   end
+
+  defp valid_sort_by(%{"sort_by" => sort_by} = _params)
+       when sort_by in ~w(item quantity days_until_expires),
+       do: String.to_atom(sort_by)
+
+  defp valid_sort_by(_sort_by), do: :id
+
+  defp valid_sort_order(%{"sort_order" => sort_order} = _params)
+       when sort_order in ~w(asc desc),
+       do: String.to_atom(sort_order)
+
+  defp valid_sort_order(_sort_order), do: :asc
 
   defp flip_sort_order(:asc), do: :desc
   defp flip_sort_order(:desc), do: :asc
