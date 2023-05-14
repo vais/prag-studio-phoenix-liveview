@@ -142,6 +142,6 @@ defmodule LiveViewStudio.Donations do
 
   """
   def count_donations do
-    Repo.aggregate(Donation, :count, :id)
+    Repo.aggregate(Donation, :count)
   end
 end
