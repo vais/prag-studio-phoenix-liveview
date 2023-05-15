@@ -6,13 +6,24 @@ defmodule LiveViewStudioWeb.BoatsLive do
   import LiveViewStudioWeb.CustomComponents
 
   def mount(_params, _session, socket) do
+    {:ok, socket, temporary_assigns: [boats: []]}
+  end
+
+  def handle_params(params, _url, socket) do
+    filter = %{
+      type: params["type"] || "",
+      prices: params["prices"] || [""]
+    }
+
+    boats = Boats.list_boats(filter)
+
     socket =
       assign(socket,
-        filter: %{type: "", prices: []},
-        boats: Boats.list_boats()
+        filter: filter,
+        boats: boats
       )
 
-    {:ok, socket, temporary_assigns: [boats: []]}
+    {:noreply, socket}
   end
 
   def render(assigns) do
@@ -101,9 +112,9 @@ defmodule LiveViewStudioWeb.BoatsLive do
     ]
   end
 
-  def handle_event("filter", %{"type" => type, "prices" => prices}, socket) do
-    filter = %{type: type, prices: prices}
-    socket = assign(socket, filter: filter, boats: Boats.list_boats(filter))
+  def handle_event("filter", params, socket) do
+    params = Map.take(params, ["type", "prices"])
+    socket = push_patch(socket, to: ~p"/boats?#{params}")
     {:noreply, socket}
   end
 end
