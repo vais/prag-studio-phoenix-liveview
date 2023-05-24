@@ -15,32 +15,37 @@ defmodule LiveViewStudioWeb.ServersLive do
     {:ok, socket}
   end
 
-  def handle_params(%{"id" => id}, _uri, socket) do
-    server = Servers.get_server!(id)
-    socket = assign(socket, selected_server: server, page_title: server.name)
+  def handle_params(params, _uri, socket) do
+    socket = apply_action(socket, socket.assigns.live_action, params)
     {:noreply, socket}
   end
 
-  def handle_params(_params, _uri, socket) do
-    socket =
-      if socket.assigns.live_action == :new do
-        changeset = Servers.change_server(%Server{})
+  defp apply_action(socket, :index, _params) do
+    server = hd(socket.assigns.servers)
 
-        assign(socket,
-          selected_server: nil,
-          page_title: "New Server",
-          form: to_form(changeset)
-        )
-      else
-        server = hd(socket.assigns.servers)
+    assign(socket,
+      selected_server: server,
+      page_title: server.name
+    )
+  end
 
-        assign(socket,
-          selected_server: server,
-          page_title: server.name
-        )
-      end
+  defp apply_action(socket, :new, _params) do
+    changeset = Servers.change_server(%Server{})
 
-    {:noreply, socket}
+    assign(socket,
+      selected_server: nil,
+      page_title: "New Server",
+      form: to_form(changeset)
+    )
+  end
+
+  defp apply_action(socket, :show, %{"id" => id}) do
+    server = Servers.get_server!(id)
+
+    assign(socket,
+      selected_server: server,
+      page_title: server.name
+    )
   end
 
   def handle_event("drink", _, socket) do
