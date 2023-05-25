@@ -14,31 +14,52 @@ defmodule LiveViewStudioWeb.VolunteersLive do
     {:ok, socket}
   end
 
-  def handle_event("save", %{"volunteer" => volunteer_params}, socket) do
-    case Volunteers.create_volunteer(volunteer_params) do
-      {:error, changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+  def handle_event("validate", %{"volunteer" => volunteer_params}, socket) do
+    form =
+      Volunteers.change_volunteer(%Volunteer{}, volunteer_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
 
-      {:ok, volunteer} ->
-        {:noreply,
-         assign(socket,
-           volunteers: [volunteer | socket.assigns.volunteers],
-           form: to_form(Volunteers.change_volunteer(%Volunteer{}))
-         )}
-    end
+    {:noreply, assign(socket, :form, form)}
+  end
+
+  def handle_event("save", %{"volunteer" => volunteer_params}, socket) do
+    socket =
+      case Volunteers.create_volunteer(volunteer_params) do
+        {:error, changeset} ->
+          form = to_form(changeset)
+
+          socket
+          |> assign(:form, form)
+
+        {:ok, volunteer} ->
+          changeset = Volunteers.change_volunteer(%Volunteer{})
+
+          socket
+          |> update(:volunteers, &[volunteer | &1])
+          |> assign(:form, to_form(changeset))
+      end
+
+    {:noreply, socket}
   end
 
   def render(assigns) do
     ~H"""
     <h1>Volunteer Check-In</h1>
     <div id="volunteer-checkin">
-      <.form for={@form} phx-submit="save">
-        <.input field={@form[:name]} placeholder="Name" autocomplete="off" />
+      <.form for={@form} phx-submit="save" phx-change="validate">
+        <.input
+          field={@form[:name]}
+          placeholder="Name"
+          autocomplete="off"
+          phx-debounce="blur"
+        />
         <.input
           field={@form[:phone]}
           placeholder="Phone"
           type="tel"
           autocomplete="off"
+          phx-debounce="blur"
         />
         <.button phx-disable-with="Saving...">
           Check in
