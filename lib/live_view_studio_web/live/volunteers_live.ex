@@ -5,22 +5,29 @@ defmodule LiveViewStudioWeb.VolunteersLive do
   alias LiveViewStudio.Volunteers.Volunteer
 
   def mount(_params, _session, socket) do
+    changeset = Volunteers.change_volunteer(%Volunteer{})
+
     socket =
-      assign(socket,
-        volunteers: Volunteers.list_volunteers(),
-        form: to_form(Volunteers.change_volunteer(%Volunteer{}))
-      )
+      socket
+      |> stream(:volunteers, Volunteers.list_volunteers())
+      |> assign(:form, to_form(changeset))
 
     {:ok, socket}
   end
 
   def handle_event("validate", %{"volunteer" => volunteer_params}, socket) do
+    changeset = Volunteers.change_volunteer(%Volunteer{}, volunteer_params)
+
     form =
-      Volunteers.change_volunteer(%Volunteer{}, volunteer_params)
+      changeset
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, :form, form)}
+    socket =
+      socket
+      |> assign(:form, form)
+
+    {:noreply, socket}
   end
 
   def handle_event("save", %{"volunteer" => volunteer_params}, socket) do
@@ -36,7 +43,7 @@ defmodule LiveViewStudioWeb.VolunteersLive do
           changeset = Volunteers.change_volunteer(%Volunteer{})
 
           socket
-          |> update(:volunteers, &[volunteer | &1])
+          |> stream_insert(:volunteers, volunteer, at: 0)
           |> assign(:form, to_form(changeset))
       end
 
@@ -65,20 +72,25 @@ defmodule LiveViewStudioWeb.VolunteersLive do
           Check in
         </.button>
       </.form>
-      <div
-        :for={volunteer <- @volunteers}
-        class={"volunteer #{if volunteer.checked_out, do: "out"}"}
-      >
-        <div class="name">
-          <%= volunteer.name %>
-        </div>
-        <div class="phone">
-          <%= volunteer.phone %>
-        </div>
-        <div class="status">
-          <button>
-            <%= if volunteer.checked_out, do: "Check In", else: "Check Out" %>
-          </button>
+      <div id="volunteers" phx-update="stream">
+        <div
+          :for={{volunteer_id, volunteer} <- @streams.volunteers}
+          id={volunteer_id}
+          class={"volunteer #{if volunteer.checked_out, do: "out"}"}
+        >
+          <div class="name">
+            <%= volunteer.name %>
+          </div>
+          <div class="phone">
+            <%= volunteer.phone %>
+          </div>
+          <div class="status">
+            <button>
+              <%= if volunteer.checked_out,
+                do: "Check In",
+                else: "Check Out" %>
+            </button>
+          </div>
         </div>
       </div>
     </div>
