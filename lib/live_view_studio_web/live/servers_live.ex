@@ -77,6 +77,27 @@ defmodule LiveViewStudioWeb.ServersLive do
     {:noreply, assign(socket, :form, form)}
   end
 
+  def handle_event("toggle-status", %{"id" => id}, socket) do
+    server = Servers.get_server!(id)
+
+    {:ok, server} =
+      Servers.update_server(
+        server,
+        %{status: if(server.status == "up", do: "down", else: "up")}
+      )
+
+    socket =
+      assign(socket,
+        selected_server: server,
+        servers:
+          Enum.map(socket.assigns.servers, fn s ->
+            if s.id == server.id, do: server, else: s
+          end)
+      )
+
+    {:noreply, socket}
+  end
+
   def render(assigns) do
     ~H"""
     <h1>Servers</h1>
@@ -161,9 +182,13 @@ defmodule LiveViewStudioWeb.ServersLive do
     <div class="server">
       <div class="header">
         <h2><%= @server.name %></h2>
-        <span class={@server.status}>
+        <button
+          phx-click="toggle-status"
+          phx-value-id={@server.id}
+          class={@server.status}
+        >
           <%= @server.status %>
-        </span>
+        </button>
       </div>
       <div class="body">
         <div class="row">
