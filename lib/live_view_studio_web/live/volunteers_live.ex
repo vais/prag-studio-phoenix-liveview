@@ -56,6 +56,13 @@ defmodule LiveViewStudioWeb.VolunteersLive do
     {:noreply, stream_insert(socket, :volunteers, volunteer)}
   end
 
+  def handle_event("delete-volunteer", %{"id" => id}, socket) do
+    volunteer = Volunteers.get_volunteer!(id)
+    {:ok, volunteer} = Volunteers.delete_volunteer(volunteer)
+    socket = stream_delete(socket, :volunteers, volunteer)
+    {:noreply, socket}
+  end
+
   def render(assigns) do
     ~H"""
     <h1>Volunteer Check-In</h1>
@@ -97,6 +104,14 @@ defmodule LiveViewStudioWeb.VolunteersLive do
                 else: "Check Out" %>
             </button>
           </div>
+          <.link
+            class="delete"
+            phx-click="delete-volunteer"
+            phx-value-id={volunteer.id}
+            data-confirm="Are you sure?"
+          >
+            <.icon name="hero-trash-solid" />
+          </.link>
         </div>
       </div>
     </div>
