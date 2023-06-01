@@ -2,7 +2,7 @@ defmodule LiveViewStudioWeb.ServersLive do
   use LiveViewStudioWeb, :live_view
 
   alias LiveViewStudio.Servers
-  alias LiveViewStudio.Servers.Server
+  alias LiveViewStudioWeb.ServerForm
 
   def mount(_params, _session, socket) do
     socket =
@@ -30,12 +30,9 @@ defmodule LiveViewStudioWeb.ServersLive do
   end
 
   defp apply_action(socket, :new, _params) do
-    changeset = Servers.change_server(%Server{})
-
     assign(socket,
       selected_server: nil,
-      page_title: "New Server",
-      form: to_form(changeset)
+      page_title: "New Server"
     )
   end
 
@@ -50,31 +47,6 @@ defmodule LiveViewStudioWeb.ServersLive do
 
   def handle_event("drink", _, socket) do
     {:noreply, update(socket, :coffees, &(&1 + 1))}
-  end
-
-  def handle_event("save", %{"server" => server_params}, socket) do
-    socket =
-      case Servers.create_server(server_params) do
-        {:error, changeset} ->
-          socket
-          |> assign(:form, to_form(changeset))
-
-        {:ok, server} ->
-          socket
-          |> update(:servers, &[server | &1])
-          |> push_patch(to: ~p"/servers/#{server}")
-      end
-
-    {:noreply, socket}
-  end
-
-  def handle_event("validate", %{"server" => server_params}, socket) do
-    form =
-      Servers.change_server(%Server{}, server_params)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, :form, form)}
   end
 
   def handle_event("toggle-status", %{"id" => id}, socket) do
@@ -94,6 +66,15 @@ defmodule LiveViewStudioWeb.ServersLive do
             if s.id == server.id, do: server, else: s
           end)
       )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({ServerForm, :server_created, server}, socket) do
+    socket =
+      socket
+      |> update(:servers, &[server | &1])
+      |> push_patch(to: ~p"/servers/#{server}")
 
     {:noreply, socket}
   end
@@ -128,7 +109,7 @@ defmodule LiveViewStudioWeb.ServersLive do
           <%= if @selected_server do %>
             <.server server={@selected_server} />
           <% else %>
-            <.server_form form={@form} />
+            <.live_component module={ServerForm} id="new" />
           <% end %>
           <div class="links">
             <.link navigate={~p"/light"}>Adjust lights</.link>
@@ -136,42 +117,6 @@ defmodule LiveViewStudioWeb.ServersLive do
         </div>
       </div>
     </div>
-    """
-  end
-
-  def server_form(assigns) do
-    ~H"""
-    <.form
-      for={@form}
-      phx-submit="save"
-      phx-change="validate"
-      autocomplete="off"
-    >
-      <div class="field">
-        <.input field={@form[:name]} label="Name" phx-debounce="2000" />
-      </div>
-      <div class="field">
-        <.input
-          field={@form[:framework]}
-          label="Framework"
-          phx-debounce="2000"
-        />
-      </div>
-      <div class="field">
-        <.input
-          field={@form[:size]}
-          label="Size (MB)"
-          type="number"
-          phx-debounce="2000"
-        />
-      </div>
-      <div class="field">
-        <.button phx-disable-with="Saving...">Save</.button>
-        <.link patch={~p"/servers"} class="cancel">
-          Cancel
-        </.link>
-      </div>
-    </.form>
     """
   end
 
