@@ -9,13 +9,14 @@ defmodule LiveViewStudio.Volunteers do
   alias LiveViewStudio.Volunteers.Volunteer
 
   @topic inspect(__MODULE__)
+  @pubsub LiveViewStudio.PubSub
 
   def subscribe() do
-    Phoenix.PubSub.subscribe(LiveViewStudio.PubSub, @topic)
+    Phoenix.PubSub.subscribe(@pubsub, @topic)
   end
 
   def broadcast({:ok, volunteer} = success, tag) do
-    Phoenix.PubSub.broadcast(LiveViewStudio.PubSub, @topic, {tag, volunteer})
+    Phoenix.PubSub.broadcast(@pubsub, @topic, {tag, volunteer})
     success
   end
 
