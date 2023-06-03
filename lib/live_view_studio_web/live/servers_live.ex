@@ -70,6 +70,13 @@ defmodule LiveViewStudioWeb.ServersLive do
     {:noreply, socket}
   end
 
+  def handle_event("delete", %{"id" => id}, socket) do
+    server = Servers.get_server!(id)
+    socket = update(socket, :servers, &List.delete(&1, server))
+    {:ok, _server} = Servers.delete_server(server)
+    {:noreply, push_patch(socket, to: ~p"/servers")}
+  end
+
   def handle_info({ServerForm, :server_created, server}, socket) do
     socket =
       socket
@@ -151,6 +158,14 @@ defmodule LiveViewStudioWeb.ServersLive do
         <blockquote>
           <%= @server.last_commit_message %>
         </blockquote>
+        <button
+          phx-click="delete"
+          phx-value-id={@server.id}
+          data-confirm="Are you 100% sure?"
+          class="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded"
+        >
+          Delete <%= @server.name %>
+        </button>
       </div>
     </div>
     """
