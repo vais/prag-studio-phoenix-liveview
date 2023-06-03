@@ -70,8 +70,7 @@ defmodule LiveViewStudioWeb.VolunteerForm do
         {:error, changeset} ->
           assign(socket, :form, to_form(changeset))
 
-        {:ok, volunteer} ->
-          send(self(), {:volunteer_created, volunteer})
+        {:ok, _volunteer} ->
           changeset = Volunteers.change_volunteer(%Volunteer{})
           assign(socket, :form, to_form(changeset))
       end
