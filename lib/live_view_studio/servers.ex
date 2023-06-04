@@ -5,8 +5,21 @@ defmodule LiveViewStudio.Servers do
 
   import Ecto.Query, warn: false
   alias LiveViewStudio.Repo
-
   alias LiveViewStudio.Servers.Server
+
+  @pubsub LiveViewStudio.PubSub
+  @topic inspect(__MODULE__)
+
+  def subscribe do
+    Phoenix.PubSub.subscribe(@pubsub, @topic)
+  end
+
+  def broadcast({:ok, server} = success, tag) do
+    Phoenix.PubSub.broadcast(@pubsub, @topic, {tag, server})
+    success
+  end
+
+  def broadcast({:error, _changeset} = error, _tag), do: error
 
   @doc """
   Returns the list of servers.
@@ -53,6 +66,7 @@ defmodule LiveViewStudio.Servers do
     %Server{}
     |> Server.changeset(attrs)
     |> Repo.insert()
+    |> broadcast(:server_created)
   end
 
   @doc """
@@ -71,6 +85,7 @@ defmodule LiveViewStudio.Servers do
     server
     |> Server.changeset(attrs)
     |> Repo.update()
+    |> broadcast(:server_updated)
   end
 
   @doc """
@@ -87,6 +102,7 @@ defmodule LiveViewStudio.Servers do
   """
   def delete_server(%Server{} = server) do
     Repo.delete(server)
+    |> broadcast(:server_deleted)
   end
 
   @doc """

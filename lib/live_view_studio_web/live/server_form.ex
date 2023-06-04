@@ -16,8 +16,7 @@ defmodule LiveViewStudioWeb.ServerForm do
         {:noreply, assign(socket, :form, to_form(changeset))}
 
       {:ok, server} ->
-        send(self(), {__MODULE__, :server_created, server})
-        {:noreply, socket}
+        {:noreply, push_patch(socket, to: ~p"/servers/#{server}")}
     end
   end
 

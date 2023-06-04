@@ -5,6 +5,10 @@ defmodule LiveViewStudioWeb.ServersLive do
   alias LiveViewStudioWeb.ServerForm
 
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Servers.subscribe()
+    end
+
     socket =
       assign(
         socket,
@@ -58,32 +62,47 @@ defmodule LiveViewStudioWeb.ServersLive do
         %{status: if(server.status == "up", do: "down", else: "up")}
       )
 
-    socket =
-      assign(socket,
-        selected_server: server,
-        servers:
-          Enum.map(socket.assigns.servers, fn s ->
-            if s.id == server.id, do: server, else: s
-          end)
-      )
-
-    {:noreply, socket}
+    {:noreply, assign(socket, :selected_server, server)}
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
     server = Servers.get_server!(id)
-    socket = update(socket, :servers, &List.delete(&1, server))
     {:ok, _server} = Servers.delete_server(server)
-    {:noreply, push_patch(socket, to: ~p"/servers")}
+    {:noreply, socket}
   end
 
-  def handle_info({ServerForm, :server_created, server}, socket) do
-    socket =
-      socket
-      |> update(:servers, &[server | &1])
-      |> push_patch(to: ~p"/servers/#{server}")
+  def handle_info({:server_created, server}, socket) do
+    {:noreply, update(socket, :servers, &[server | &1])}
+  end
 
-    {:noreply, socket}
+  def handle_info({:server_updated, server}, socket) do
+    socket =
+      assign(
+        socket,
+        :servers,
+        Enum.map(socket.assigns.servers, fn s ->
+          if s.id == server.id, do: server, else: s
+        end)
+      )
+
+    if server.id == socket.assigns.selected_server.id do
+      {:noreply, assign(socket, :selected_server, server)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:server_deleted, server}, socket) do
+    servers = socket.assigns.servers
+    selected_server = socket.assigns.selected_server
+
+    socket = assign(socket, :servers, Enum.reject(servers, &(&1.id == server.id)))
+
+    if selected_server && selected_server.id == server.id do
+      {:noreply, push_patch(socket, to: ~p"/servers")}
+    else
+      {:noreply, socket}
+    end
   end
 
   def render(assigns) do
