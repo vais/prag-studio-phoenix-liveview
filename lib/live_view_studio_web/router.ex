@@ -32,7 +32,6 @@ defmodule LiveViewStudioWeb.Router do
     live "/servers/:id", ServersLive, :show
     live "/donations", DonationsLive
     live "/volunteers", VolunteersLive
-    live "/topsecret", TopSecretLive
     live "/presence", PresenceLive
     live "/bookings", BookingsLive
     live "/shop", ShopLive
@@ -42,6 +41,15 @@ defmodule LiveViewStudioWeb.Router do
     live "/vehicles", VehiclesLive
     live "/athletes", AthletesLive
     live "/pizza-orders", PizzaOrdersLive
+  end
+
+  scope "/", LiveViewStudioWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :ensure_authenticated,
+      on_mount: {LiveViewStudioWeb.UserAuth, :ensure_authenticated} do
+      live "/topsecret", TopSecretLive
+    end
   end
 
   # Other scopes may use custom stacks.
