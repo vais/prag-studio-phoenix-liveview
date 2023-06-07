@@ -15,6 +15,7 @@ defmodule LiveViewStudioWeb.BingoLive do
   def render(assigns) do
     ~H"""
     <h1>Bingo Boss 📢</h1>
+    <h2><%= @current_user.email %></h2>
     <div id="bingo">
       <div class="number">
         <%= @number %>

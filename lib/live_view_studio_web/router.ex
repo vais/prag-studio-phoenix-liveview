@@ -37,7 +37,6 @@ defmodule LiveViewStudioWeb.Router do
     live "/shop", ShopLive
     live "/juggling", JugglingLive
     live "/desks", DesksLive
-    live "/bingo", BingoLive
     live "/vehicles", VehiclesLive
     live "/athletes", AthletesLive
     live "/pizza-orders", PizzaOrdersLive
@@ -48,6 +47,7 @@ defmodule LiveViewStudioWeb.Router do
 
     live_session :ensure_authenticated,
       on_mount: {LiveViewStudioWeb.UserAuth, :ensure_authenticated} do
+      live "/bingo", BingoLive
       live "/topsecret", TopSecretLive
     end
   end
