@@ -1,25 +1,24 @@
 defmodule LiveViewStudioWeb.ShopLive do
   use LiveViewStudioWeb, :live_view
 
+  alias Phoenix.LiveView.JS
   alias LiveViewStudio.Products
 
   def mount(_params, _session, socket) do
     {:ok,
      assign(socket,
        products: Products.list_products(),
-       cart: %{},
-       show_cart: false
+       cart: %{}
      )}
-  end
-
-  def handle_event("toggle-show-cart", _, socket) do
-    socket = update(socket, :show_cart, fn show -> !show end)
-    {:noreply, socket}
   end
 
   def handle_event("add-product", %{"product" => product}, socket) do
     cart = Map.update(socket.assigns.cart, product, 1, &(&1 + 1))
     {:noreply, assign(socket, :cart, cart)}
+  end
+
+  defp toggle_cart() do
+    JS.toggle(to: "#cart") |> JS.toggle(to: "#backdrop")
   end
 
   def render(assigns) do
@@ -29,7 +28,7 @@ defmodule LiveViewStudioWeb.ShopLive do
       <div class="nav">
         <button
           :if={Enum.count(@cart) > 0}
-          phx-click="toggle-show-cart"
+          phx-click={toggle_cart()}
           id="cart-button"
         >
           <.icon name="hero-shopping-cart" />
@@ -53,13 +52,13 @@ defmodule LiveViewStudioWeb.ShopLive do
         </div>
       </div>
 
-      <div id="backdrop" class={unless @show_cart, do: "hidden"}></div>
+      <div id="backdrop" class="hidden" phx-click={toggle_cart()}></div>
 
-      <div id="cart" class={unless @show_cart, do: "hidden"}>
+      <div id="cart" class="hidden">
         <div class="content">
           <div class="header">
             <h2>Shopping Cart</h2>
-            <button phx-click="toggle-show-cart">
+            <button phx-click={toggle_cart()}>
               <.icon name="hero-x-mark" />
             </button>
           </div>
