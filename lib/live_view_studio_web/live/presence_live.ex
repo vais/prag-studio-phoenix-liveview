@@ -2,6 +2,7 @@ defmodule LiveViewStudioWeb.PresenceLive do
   use LiveViewStudioWeb, :live_view
 
   alias LiveViewStudioWeb.Presence
+  alias Phoenix.LiveView.JS
 
   @topic "users:video"
 
@@ -42,12 +43,24 @@ defmodule LiveViewStudioWeb.PresenceLive do
     {:noreply, socket}
   end
 
+  defp toggle_presences(js \\ %JS{}) do
+    js
+    |> JS.toggle(to: "#presences")
+    |> JS.remove_class("bg-slate-400", to: ".hero-list-bullet-solid.bg-slate-400")
+    |> JS.add_class("bg-slate-400", to: ".hero-list-bullet-solid:not(.bg-slate-400)")
+  end
+
   def render(assigns) do
     ~H"""
     <div id="presence">
       <div class="users">
-        <h2>Who's Here?</h2>
-        <ul>
+        <h2>
+          Who's Here?
+          <button phx-click={toggle_presences()}>
+            <.icon name="hero-list-bullet-solid" />
+          </button>
+        </h2>
+        <ul id="presences">
           <li :for={{_user_id, meta} <- @presences}>
             <span class="status">
               <%= if meta.is_playing, do: "👀", else: "🙈" %>
