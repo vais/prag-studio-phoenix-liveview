@@ -77,7 +77,10 @@ defmodule LiveViewStudioWeb.VolunteersLive do
         <%= @volunteer.phone %>
       </div>
       <div class="status">
-        <button phx-click="toggle-status" phx-value-id={@volunteer.id}>
+        <button phx-click={
+          JS.push("toggle-status", value: %{id: @volunteer.id})
+          |> JS.transition("shake", to: "##{@dom_id}", time: 500)
+        }>
           <%= if @volunteer.checked_out,
             do: "Check In",
             else: "Check Out" %>
@@ -85,7 +88,14 @@ defmodule LiveViewStudioWeb.VolunteersLive do
       </div>
       <.link
         class="delete"
-        phx-click="delete-volunteer"
+        phx-click={
+          JS.push("delete-volunteer", value: %{id: @volunteer.id})
+          |> JS.hide(
+            to: "##{@dom_id}",
+            transition: "ease duration-300 scale-0",
+            time: 300
+          )
+        }
         phx-value-id={@volunteer.id}
         data-confirm="Are you sure?"
       >
