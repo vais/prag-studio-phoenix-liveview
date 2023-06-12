@@ -17,8 +17,30 @@ defmodule LiveViewStudioWeb.ShopLive do
     {:noreply, assign(socket, :cart, cart)}
   end
 
-  defp toggle_cart() do
-    JS.toggle(to: "#cart") |> JS.toggle(to: "#backdrop")
+  defp add_product(product, js \\ %JS{}) do
+    js
+    |> JS.push("add-product", value: %{product: product.image})
+    |> shake_cart()
+  end
+
+  defp shake_cart(js \\ %JS{}) do
+    js
+    |> JS.transition("shake", to: "#cart-button", time: 500)
+  end
+
+  defp toggle_cart(js \\ %JS{}) do
+    js
+    |> JS.toggle(
+      to: "#backdrop",
+      in: "fade-in",
+      out: "fade-out"
+    )
+    |> JS.toggle(
+      to: "#cart",
+      in: {"ease-in-out duration-300", "translate-x-full", "tanslate-x-0"},
+      out: {"ease-in-out duration-300", "tanslate-x-0", "translate-x-full"},
+      time: 300
+    )
   end
 
   def render(assigns) do
@@ -30,6 +52,7 @@ defmodule LiveViewStudioWeb.ShopLive do
           :if={Enum.count(@cart) > 0}
           phx-click={toggle_cart()}
           id="cart-button"
+          phx-mounted={shake_cart()}
         >
           <.icon name="hero-shopping-cart" />
           <span class="count">
@@ -46,7 +69,7 @@ defmodule LiveViewStudioWeb.ShopLive do
           <div class="name">
             <%= product.name %>
           </div>
-          <button phx-click="add-product" phx-value-product={product.image}>
+          <button phx-click={add_product(product)}>
             Add
           </button>
         </div>
