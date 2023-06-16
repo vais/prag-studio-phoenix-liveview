@@ -40,6 +40,7 @@ defmodule LiveViewStudioWeb.VolunteerForm do
           type="tel"
           autocomplete="off"
           phx-debounce="blur"
+          phx-hook="PhoneNumber"
         />
         <.button phx-disable-with="Saving...">
           Check in

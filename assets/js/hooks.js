@@ -1,4 +1,14 @@
 import flatpickr from '../vendor/flatpickr'
+import {AsYouType} from '../vendor/libphonenumber-js.min';
+
+export const PhoneNumber = {
+  mounted() {
+    this.el.addEventListener('input',(e) => {
+      this.el.value = new AsYouType('US').input(this.el.value);
+    });
+  }
+};
+
 export const Calendar = {
   mounted() {
     this.pickr = flatpickr(this.el, {
