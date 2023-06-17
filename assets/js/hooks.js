@@ -1,6 +1,22 @@
 import flatpickr from '../vendor/flatpickr'
 import {AsYouType} from '../vendor/libphonenumber-js.min';
 
+export const CopyServerLink = {
+  mounted() {
+    this.el.addEventListener('click', () => {
+      const content = this.el.dataset.content;
+      navigator.clipboard.writeText(content);
+
+      const innerHTML = this.el.innerHTML;
+      this.el.innerHTML = 'Copied!';
+
+      setTimeout(() => {
+        this.el.innerHTML = innerHTML;
+      }, 1000);
+    });
+  }
+};
+
 export const PhoneNumber = {
   mounted() {
     this.el.addEventListener('input',(e) => {

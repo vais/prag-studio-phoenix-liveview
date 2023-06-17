@@ -133,7 +133,10 @@ defmodule LiveViewStudioWeb.ServersLive do
       <div class="main">
         <div class="wrapper">
           <%= if @selected_server do %>
-            <.server server={@selected_server} />
+            <.server
+              server={@selected_server}
+              server_url={url(@socket, ~p"/servers/#{@selected_server}")}
+            />
           <% else %>
             <.live_component module={ServerForm} id="new" />
           <% end %>
@@ -148,6 +151,7 @@ defmodule LiveViewStudioWeb.ServersLive do
   end
 
   attr :server, :map
+  attr :server_url, :string
 
   def server(assigns) do
     ~H"""
@@ -186,6 +190,14 @@ defmodule LiveViewStudioWeb.ServersLive do
         >
           Delete <%= @server.name %>
         </button>
+
+        <div
+          id={"copy-server-link-#{@server.id}"}
+          phx-hook="CopyServerLink"
+          data-content={@server_url}
+        >
+          Copy Link
+        </div>
       </div>
     </div>
     """
