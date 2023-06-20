@@ -26,6 +26,39 @@ defmodule LiveViewStudioWeb.DonationsLive do
     {:noreply, socket}
   end
 
+  def goto_page(socket, page) do
+    params = %{socket.assigns.options | page: page}
+    {:noreply, push_patch(socket, to: ~p"/donations?#{params}")}
+  end
+
+  def next_page(socket, _more_pages = true) do
+    goto_page(socket, socket.assigns.options.page + 1)
+  end
+
+  def next_page(socket, _more_pages = false) do
+    {:noreply, socket}
+  end
+
+  def prev_page(socket, _more_pages = true) do
+    goto_page(socket, socket.assigns.options.page - 1)
+  end
+
+  def prev_page(socket, _more_pages = false) do
+    {:noreply, socket}
+  end
+
+  def handle_event("window-keyup", %{"key" => "ArrowRight"}, socket) do
+    next_page(socket, more_pages?(socket.assigns.donation_count, socket.assigns.options))
+  end
+
+  def handle_event("window-keyup", %{"key" => "ArrowLeft"}, socket) do
+    prev_page(socket, socket.assigns.options.page > 1)
+  end
+
+  def handle_event("window-keyup", _params, socket) do
+    {:noreply, socket}
+  end
+
   def handle_event("select-per-page", %{"per_page" => per_page}, socket) do
     params = %{socket.assigns.options | per_page: per_page}
     socket = push_patch(socket, to: ~p"/donations?#{params}")
