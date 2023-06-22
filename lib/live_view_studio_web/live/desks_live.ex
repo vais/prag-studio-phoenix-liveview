@@ -42,4 +42,36 @@ defmodule LiveViewStudioWeb.DesksLive do
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     assign(socket, :form, to_form(changeset))
   end
+
+  def render(assigns) do
+    ~H"""
+    <h1>What's On Your Desk?</h1>
+    <div id="desks">
+      <.form for={@form} phx-submit="save" phx-change="validate">
+        <.input field={@form[:name]} placeholder="Name" />
+
+        <.button phx-disable-with="Uploading...">
+          Upload
+        </.button>
+      </.form>
+
+      <div id="photos" phx-update="stream">
+        <div :for={{dom_id, desk} <- @streams.desks} id={dom_id}>
+          <div
+            :for={
+              {photo_location, index} <-
+                Enum.with_index(desk.photo_locations)
+            }
+            class="photo"
+          >
+            <img src={photo_location} />
+            <div class="name">
+              <%= desk.name %> (<%= index + 1 %>)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
 end
