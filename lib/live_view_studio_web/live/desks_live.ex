@@ -8,11 +8,21 @@ defmodule LiveViewStudioWeb.DesksLive do
     if connected?(socket), do: Desks.subscribe()
 
     socket =
-      assign(socket,
-        form: to_form(Desks.change_desk(%Desk{}))
+      socket
+      |> assign(:form, to_form(Desks.change_desk(%Desk{})))
+      |> stream(:desks, Desks.list_desks())
+      |> allow_upload(:photos,
+        accept: ~w(.png .jpeg .jpg),
+        max_entries: 3,
+        max_file_size: 30_000_000
       )
 
-    {:ok, stream(socket, :desks, Desks.list_desks())}
+    {:ok, socket}
+  end
+
+  def handle_event("cancel-upload", %{"ref" => ref}, socket) do
+    socket = cancel_upload(socket, :photos, ref)
+    {:noreply, socket}
   end
 
   def handle_event("validate", %{"desk" => params}, socket) do
@@ -25,6 +35,10 @@ defmodule LiveViewStudioWeb.DesksLive do
   end
 
   def handle_event("save", %{"desk" => params}, socket) do
+    result = consume_uploaded_entries(socket, :photos, &upload_entry(socket, &1, &2))
+
+    params = Map.put(params, "photo_locations", result)
+
     case Desks.create_desk(params) do
       {:ok, _desk} ->
         changeset = Desks.change_desk(%Desk{})
@@ -39,6 +53,24 @@ defmodule LiveViewStudioWeb.DesksLive do
     {:noreply, stream_insert(socket, :desks, desk, at: 0)}
   end
 
+  defp upload_entry(socket, meta, entry) do
+    dest =
+      Path.join([
+        "priv",
+        "static",
+        "uploads",
+        "#{entry.uuid}-#{entry.client_name}"
+      ])
+
+    dest
+    |> Path.dirname()
+    |> File.mkdir_p!()
+
+    File.cp!(meta.path, dest)
+
+    {:ok, static_path(socket, "/uploads/#{Path.basename(dest)}")}
+  end
+
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     assign(socket, :form, to_form(changeset))
   end
@@ -49,6 +81,43 @@ defmodule LiveViewStudioWeb.DesksLive do
     <div id="desks">
       <.form for={@form} phx-submit="save" phx-change="validate">
         <.input field={@form[:name]} placeholder="Name" />
+
+        <div class="hint"></div>
+
+        <div class="drop" phx-drop-target={@uploads.photos.ref}>
+          <div>
+            <img src="images/upload.svg" alt="" />
+            <div>
+              <label for={@uploads.photos.ref}>
+                Upload a file
+              </label>
+              or drag and drop
+              <.live_file_input upload={@uploads.photos} class="sr-only" />
+            </div>
+            <p>
+              <%= @uploads.photos.max_entries %> photos max,
+              up tp <%= trunc(@uploads.photos.max_file_size / 1_000_000) %> MB each
+            </p>
+          </div>
+        </div>
+
+        <.error :for={error <- upload_errors(@uploads.photos)}>
+          <%= Phoenix.Naming.humanize(error) %>
+        </.error>
+
+        <div :for={entry <- @uploads.photos.entries} class="entry">
+          <.live_img_preview entry={entry} />
+          <div class="progress">
+            <div class="value"><%= entry.progress %>%</div>
+            <div class="bar">
+              <span style={"width: #{entry.progress}%"}></span>
+            </div>
+            <.error :for={error <- upload_errors(@uploads.photos, entry)}>
+              <%= Phoenix.Naming.humanize(error) %>
+            </.error>
+          </div>
+          <a phx-click="cancel-upload" phx-value-ref={entry.ref}>&times;</a>
+        </div>
 
         <.button phx-disable-with="Uploading...">
           Upload
